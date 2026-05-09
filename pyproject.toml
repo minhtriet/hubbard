@@ -1,0 +1,14 @@
+[project]
+name = "hubbard"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "jupyterlab>=4.5.7",
+    "matplotlib>=3.10.9",
+    "pennylane==0.44.1",
+    "ruff>=0.15.12",
+    "sympy>=1.14.0",
+    "tqdm>=4.67.3",
+]
