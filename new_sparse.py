@@ -229,8 +229,20 @@ def _matrix_transform(
 
     return [tape], processing_fn
 
-
+# test case 1
 H = qp.X(0) @ qp.Y(1) + qp.Z(0) @ qp.Z(1)
+
+dense = qp.matrix(qp.TrotterProduct(H, n=10, time=1.5, order=1))
+sparse_to_dense = np.array(matrix(qp.TrotterProduct(H, n=10, time=1.5, order=1)).todense())
+np.allclose(dense, sparse_to_dense)
+
+dense = qp.matrix(qp.TrotterProduct(H, n=10, time=1.5, order=2))
+sparse_to_dense = np.array(matrix(qp.TrotterProduct(H, n=10, time=1.5, order=2)).todense())
+np.allclose(dense, sparse_to_dense)
+
+coeffs = [0.25, 0.75]
+ops = [qp.X(0), qp.Z(0)]
+H = qp.dot(coeffs, ops)
 
 dense = qp.matrix(qp.TrotterProduct(H, n=10, time=1.5, order=1))
 sparse_to_dense = np.array(matrix(qp.TrotterProduct(H, n=10, time=1.5, order=1)).todense())
