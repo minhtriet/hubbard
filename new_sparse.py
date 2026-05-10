@@ -9,10 +9,28 @@ from pennylane.operation import Operator
 from pennylane.pauli import PauliSentence, PauliWord
 from pennylane.typing import TensorLike, PostprocessingFn
 
+from functools import reduce
+
+
 from pennylane.tape import QuantumScript, QuantumScriptBatch
 
 from pennylane.ops.functions.matrix import catalyst_qjit, _matrix_transform
 
+
+def _pad_ops(ops: Operator, max_wire: int):
+    """
+    Pads a list of operations to the specified maximum wire index by
+    adding identity operations on missing wires and between operations if needed
+    """
+    # Create A = {0: I, 1: I ..., max_wire: I} then loop through wires that have operations,
+    # then remove what wire from A
+    pad_dict = {wire: qp.I(wire).sparse_matrix() for wire in range(max_wire + 1)}
+    for op in ops.operands:
+        pad_dict[op.wires[0]] = op.sparse_matrix()
+        for wire in op.wires[1:]:
+            pad_dict.pop(wire)   # test with op spanning multiple wire, RXX, Toffoli, etc.
+    result = reduce(lambda x, y: x @ y, pad_dict.values())
+    return result
 
 def matrix(op: Operator | PauliWord | PauliSentence, wire_order=None) -> TensorLike:
     r"""The dense matrix representation of an operation or quantum circuit.
@@ -178,10 +196,10 @@ def matrix(op: Operator | PauliWord | PauliSentence, wire_order=None) -> TensorL
             f"those in wire_order {list(wire_order)}"
         )
     QueuingManager.remove(op)
-    if op.has_matrix:
-        return op.matrix(wire_order=wire_order)
     if op.has_sparse_matrix:
         return op.sparse_matrix(wire_order=wire_order).todense()
+    if op.has_matrix:
+        return op.matrix(wire_order=wire_order)
     if op.has_decomposition:
         with QueuingManager.stop_recording():
             ops = op.decomposition()
@@ -230,20 +248,101 @@ def _matrix_transform(
     return [tape], processing_fn
 
 # test case 1
-H = qp.X(0) @ qp.Y(1) + qp.Z(0) @ qp.Z(1)
+# H = qp.X(0) @ qp.Y(1) + qp.Z(0) @ qp.Z(1)
+#
+# dense = qp.matrix(qp.TrotterProduct(H, n=10, time=1.5, order=1))
+# sparse_to_dense = np.array(matrix(qp.TrotterProduct(H, n=10, time=1.5, order=1)).todense())
+# np.allclose(dense, sparse_to_dense)
+#
+# dense = qp.matrix(qp.TrotterProduct(H, n=10, time=1.5, order=2))
+# sparse_to_dense = np.array(matrix(qp.TrotterProduct(H, n=10, time=1.5, order=2)).todense())
+# np.allclose(dense, sparse_to_dense)
+#
+# coeffs = [0.25, 0.75]
+# ops = [qp.X(0), qp.Z(0)]
+# H = qp.dot(coeffs, ops)
+#
+# dense = qp.matrix(qp.TrotterProduct(H, n=10, time=1.5, order=1))
+# sparse_to_dense = np.array(matrix(qp.TrotterProduct(H, n=10, time=1.5, order=1)).todense())
+# np.allclose(dense, sparse_to_dense)
 
-dense = qp.matrix(qp.TrotterProduct(H, n=10, time=1.5, order=1))
-sparse_to_dense = np.array(matrix(qp.TrotterProduct(H, n=10, time=1.5, order=1)).todense())
-np.allclose(dense, sparse_to_dense)
 
-dense = qp.matrix(qp.TrotterProduct(H, n=10, time=1.5, order=2))
-sparse_to_dense = np.array(matrix(qp.TrotterProduct(H, n=10, time=1.5, order=2)).todense())
-np.allclose(dense, sparse_to_dense)
+H = (
+    -0.5 *(qp.Y(0) @ qp.Z(1) @ qp.Y(2))
+  + -0.5 *(qp.X(0) @ qp.Z(1) @ qp.X(2))
+  + 8.0 * qp.I([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+  + -0.5 *(qp.Y(1) @ qp.Z(2) @ qp.Y(3))
+  + -0.5 *(qp.X(1) @ qp.Z(2) @ qp.X(3))
+  + -0.5 *(qp.Y(0) @ qp.Z(1) @ qp.Z(2) @ qp.Z(3) @ qp.Y(4))
+  + -0.5 *(qp.X(0) @ qp.Z(1) @ qp.Z(2) @ qp.Z(3) @ qp.X(4))
+  + -0.5 *(qp.Y(1) @ qp.Z(2) @ qp.Z(3) @ qp.Z(4) @ qp.Y(5))
+  + -0.5 *(qp.X(1) @ qp.Z(2) @ qp.Z(3) @ qp.Z(4) @ qp.X(5))
+  + -0.5 *(qp.Y(0) @ qp.Z(1) @ qp.Z(2) @ qp.Z(3) @ qp.Z(4) @ qp.Z(5) @ qp.Z(6) @ qp.Z(7) @ qp.Y(8))
+  + -0.5 *(qp.X(0) @ qp.Z(1) @ qp.Z(2) @ qp.Z(3) @ qp.Z(4) @ qp.Z(5) @ qp.Z(6) @ qp.Z(7) @ qp.X(8))
+  + -0.5 *(qp.Y(1) @ qp.Z(2) @ qp.Z(3) @ qp.Z(4) @ qp.Z(5) @ qp.Z(6) @ qp.Z(7) @ qp.Z(8) @ qp.Y(9))
+  + -0.5 *(qp.X(1) @ qp.Z(2) @ qp.Z(3) @ qp.Z(4) @ qp.Z(5) @ qp.Z(6) @ qp.Z(7) @ qp.Z(8) @ qp.X(9))
+  + -0.5 *(qp.Y(2) @ qp.Z(3) @ qp.Z(4) @ qp.Z(5) @ qp.Y(6))
+  + -0.5 *(qp.X(2) @ qp.Z(3) @ qp.Z(4) @ qp.Z(5) @ qp.X(6))
+  + -0.5 *(qp.Y(3) @ qp.Z(4) @ qp.Z(5) @ qp.Z(6) @ qp.Y(7))
+  + -0.5 *(qp.X(3) @ qp.Z(4) @ qp.Z(5) @ qp.Z(6) @ qp.X(7))
+  + -0.5 *(qp.Y(2) @ qp.Z(3) @ qp.Z(4) @ qp.Z(5) @ qp.Z(6) @ qp.Z(7) @ qp.Z(8) @ qp.Z(9) @ qp.Y(10))
+  + -0.5 *(qp.X(2) @ qp.Z(3) @ qp.Z(4) @ qp.Z(5) @ qp.Z(6) @ qp.Z(7) @ qp.Z(8) @ qp.Z(9) @ qp.X(10))
+  + -0.5 *(qp.Y(3) @ qp.Z(4) @ qp.Z(5) @ qp.Z(6) @ qp.Z(7) @ qp.Z(8) @ qp.Z(9) @ qp.Z(10) @ qp.Y(11))
+  + -0.5 *(qp.X(3) @ qp.Z(4) @ qp.Z(5) @ qp.Z(6) @ qp.Z(7) @ qp.Z(8) @ qp.Z(9) @ qp.Z(10) @ qp.X(11))
+  + -0.5 *(qp.Y(4) @ qp.Z(5) @ qp.Y(6))
+  + -0.5 *(qp.X(4) @ qp.Z(5) @ qp.X(6))
+  + -0.5 *(qp.Y(5) @ qp.Z(6) @ qp.Y(7))
+  + -0.5 *(qp.X(5) @ qp.Z(6) @ qp.X(7))
+  + -0.5 *(qp.Y(4) @ qp.Z(5) @ qp.Z(6) @ qp.Z(7) @ qp.Z(8) @ qp.Z(9) @ qp.Z(10) @ qp.Z(11) @ qp.Y(12))
+  + -0.5 *(qp.X(4) @ qp.Z(5) @ qp.Z(6) @ qp.Z(7) @ qp.Z(8) @ qp.Z(9) @ qp.Z(10) @ qp.Z(11) @ qp.X(12))
+  + -0.5 *(qp.Y(5) @ qp.Z(6) @ qp.Z(7) @ qp.Z(8) @ qp.Z(9) @ qp.Z(10) @ qp.Z(11) @ qp.Z(12) @ qp.Y(13))
+  + -0.5 *(qp.X(5) @ qp.Z(6) @ qp.Z(7) @ qp.Z(8) @ qp.Z(9) @ qp.Z(10) @ qp.Z(11) @ qp.Z(12) @ qp.X(13))
+  + -0.5 *(qp.Y(6) @ qp.Z(7) @ qp.Z(8) @ qp.Z(9) @ qp.Z(10) @ qp.Z(11) @ qp.Z(12) @ qp.Z(13) @ qp.Y(14))
+  + -0.5 *(qp.X(6) @ qp.Z(7) @ qp.Z(8) @ qp.Z(9) @ qp.Z(10) @ qp.Z(11) @ qp.Z(12) @ qp.Z(13) @ qp.X(14))
+  + -0.5 *(qp.Y(7) @ qp.Z(8) @ qp.Z(9) @ qp.Z(10) @ qp.Z(11) @ qp.Z(12) @ qp.Z(13) @ qp.Z(14) @ qp.Y(15))
+  + -0.5 *(qp.X(7) @ qp.Z(8) @ qp.Z(9) @ qp.Z(10) @ qp.Z(11) @ qp.Z(12) @ qp.Z(13) @ qp.Z(14) @ qp.X(15))
+  + -0.5 *(qp.Y(8) @ qp.Z(9) @ qp.Y(10))
+  + -0.5 *(qp.X(8) @ qp.Z(9) @ qp.X(10))
+  + -0.5 *(qp.Y(9) @ qp.Z(10) @ qp.Y(11))
+  + -0.5 *(qp.X(9) @ qp.Z(10) @ qp.X(11))
+  + -0.5 *(qp.Y(8) @ qp.Z(9) @ qp.Z(10) @ qp.Z(11) @ qp.Y(12))
+  + -0.5 *(qp.X(8) @ qp.Z(9) @ qp.Z(10) @ qp.Z(11) @ qp.X(12))
+  + -0.5 *(qp.Y(9) @ qp.Z(10) @ qp.Z(11) @ qp.Z(12) @ qp.Y(13))
+  + -0.5 *(qp.X(9) @ qp.Z(10) @ qp.Z(11) @ qp.Z(12) @ qp.X(13))
+  + -0.5 *(qp.Y(10) @ qp.Z(11) @ qp.Z(12) @ qp.Z(13) @ qp.Y(14))
+  + -0.5 *(qp.X(10) @ qp.Z(11) @ qp.Z(12) @ qp.Z(13) @ qp.X(14))
+  + -0.5 *(qp.Y(11) @ qp.Z(12) @ qp.Z(13) @ qp.Z(14) @ qp.Y(15))
+  + -0.5 *(qp.X(11) @ qp.Z(12) @ qp.Z(13) @ qp.Z(14) @ qp.X(15))
+  + -0.5 *(qp.Y(12) @ qp.Z(13) @ qp.Y(14))
+  + -0.5 *(qp.X(12) @ qp.Z(13) @ qp.X(14))
+  + -0.5 *(qp.Y(13) @ qp.Z(14) @ qp.Y(15))
+  + -0.5 *(qp.X(13) @ qp.Z(14) @ qp.X(15))
+  + -1.0 *qp.Z(1)
+  + -1.0 *qp.Z(0)
+  +qp.Z(0) @ qp.Z(1)
+  + -1.0 *qp.Z(3)
+  + -1.0 *qp.Z(2)
+  +qp.Z(2) @ qp.Z(3)
+  + -1.0 *qp.Z(5)
+  + -1.0 *qp.Z(4)
+  +qp.Z(4) @ qp.Z(5)
+  + -1.0 *qp.Z(7)
+  + -1.0 *qp.Z(6)
+  +qp.Z(6) @ qp.Z(7)
+  + -1.0 *qp.Z(9)
+  + -1.0 *qp.Z(8)
+  +qp.Z(8) @ qp.Z(9)
+  + -1.0 *qp.Z(11)
+  + -1.0 *qp.Z(10)
+  +qp.Z(10) @ qp.Z(11)
+  + -1.0 *qp.Z(13)
+  + -1.0 *qp.Z(12)
+  +qp.Z(12) @ qp.Z(13)
+  + -1.0 *qp.Z(15)
+  + -1.0 *qp.Z(14)
+  +qp.Z(14) @ qp.Z(15)
+)
+# matrix(qp.TrotterProduct(H, n=10, time=1.5, order=1)).todense()
 
-coeffs = [0.25, 0.75]
-ops = [qp.X(0), qp.Z(0)]
-H = qp.dot(coeffs, ops)
-
-dense = qp.matrix(qp.TrotterProduct(H, n=10, time=1.5, order=1))
-sparse_to_dense = np.array(matrix(qp.TrotterProduct(H, n=10, time=1.5, order=1)).todense())
-np.allclose(dense, sparse_to_dense)
+sparse = _pad_ops(qp.Z(14) @ qp.Z(15), max_wire=15)
+assert sparse.shape == (2**16, 2**16)
