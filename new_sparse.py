@@ -323,9 +323,9 @@ H = (
 )
 
 num_wire = len(H.wires)
-# sparse = matrix(H, return_sparse=True)
-# assert sparse.shape == (2**num_wire, 2**num_wire)
-# np.allclose(qp.matrix(H), sparse.todense())
+sparse_m = matrix(H, return_sparse=True)
+assert sparse_m.shape == (2**num_wire, 2**num_wire)
+np.allclose(qp.matrix(H), sparse_m.todense())
 
 op = qp.TrotterProduct(H, n=10, time=1.5, order=1)
 dense = qp.matrix(op)
