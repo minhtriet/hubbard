@@ -8,3 +8,7 @@ website:
 format:
   html:
     theme: cosmo
+    code-fold: false
+    highlight-style: github
+    markdown:
+      hard_line_breaks: true
