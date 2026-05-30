@@ -13,6 +13,8 @@ format:
     code-fold: false
     markdown:
       hard_line_breaks: true
+    mainfont: "Libre Baskerville"
+    monofont: "Source Code Pro"
 
 execute:
   enabled: true
