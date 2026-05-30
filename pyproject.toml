@@ -7,9 +7,31 @@ requires-python = ">=3.11"
 dependencies = [
     "jupyterlab>=4.5.7",
     "matplotlib>=3.10.9",
+    "mdformat>=1.0.0",
     "pennylane==0.44.1",
     "pre-commit>=4.6.0",
     "ruff>=0.15.12",
     "sympy>=1.14.0",
     "tqdm>=4.67.3",
 ]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"*.ipynb" = [
+  "E402",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["hubbard"]
+combine-as-imports = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
