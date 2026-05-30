@@ -13,3 +13,6 @@ format:
     code-fold: false
     markdown:
       hard_line_breaks: true
+
+execute:
+  enabled: true
