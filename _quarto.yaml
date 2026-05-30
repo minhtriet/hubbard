@@ -7,8 +7,8 @@ website:
 
 format:
   html:
-    theme: cosmo
+    theme: pandoc
     code-fold: false
-    highlight-style: github
+    syntax-highlighting: kate
     markdown:
       hard_line_breaks: true
