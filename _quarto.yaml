@@ -7,10 +7,9 @@ website:
 
 format:
   html:
-    theme: litera
+    theme: cerulean
     code-block-bg: true
     code-block-border-left: true
     code-fold: false
-    syntax-highlighting: kate
     markdown:
       hard_line_breaks: true
