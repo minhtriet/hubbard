@@ -6,7 +6,8 @@ repos:
         args: [--fix]
       - id: ruff-format
 
-  - repo: https://github.com/executablebooks/mdformat
-    rev: 1.0.0
+  - repo: https://github.com/nbQA-dev/nbQA
+    rev: 1.9.1
     hooks:
-      - id: mdformat
+     - id: nbqa-ruff-check
+     - id: nbqa-ruff-format
