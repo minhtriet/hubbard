@@ -7,9 +7,9 @@ website:
 
 format:
   html:
-    theme: cosmo
-    mainfont: serif
+    theme: litera
     code-block-bg: true
+    code-block-border-left: true
     code-fold: false
     syntax-highlighting: kate
     markdown:
