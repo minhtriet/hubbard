@@ -8,7 +8,8 @@ website:
 format:
   html:
     theme: cosmo
-    mainfont: "Georgia", serif
+    mainfont: serif
+    code-block-bg: true
     code-fold: false
     syntax-highlighting: kate
     markdown:
