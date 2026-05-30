@@ -13,8 +13,9 @@ format:
     code-fold: false
     markdown:
       hard_line_breaks: true
-    mainfont: "Libre Baskerville"
-    monofont: "Source Code Pro"
+    toc: true
+    toc-depth: 2
+    number-sections: true
 
 execute:
   enabled: true
