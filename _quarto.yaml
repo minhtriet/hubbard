@@ -16,7 +16,6 @@ format:
     toc: true
     toc-depth: 2
     number-sections: true
-    mainfont: Inter
 
 execute:
   enabled: true
