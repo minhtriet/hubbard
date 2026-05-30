@@ -15,7 +15,7 @@ dependencies = [
     "tqdm>=4.67.3",
 ]
 
-[tool.ruff]
+[tool.ruffi.lint]
 line-length = 88
 target-version = "py312"
 
