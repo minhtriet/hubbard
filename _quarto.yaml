@@ -16,4 +16,4 @@ format:
     number-sections: true
 
 execute:
-  enabled: false
+  enabled: true
