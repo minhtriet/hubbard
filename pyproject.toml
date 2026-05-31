@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "jupyter-cache>=1.0.1",
     "jupyterlab>=4.5.7",
     "matplotlib>=3.10.9",
     "nbqa>=1.9.1",
