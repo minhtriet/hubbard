@@ -17,4 +17,3 @@ format:
 
 execute:
   enabled: true
-  cache: true
