@@ -28,6 +28,14 @@ jobs:
       - name: Install Quarto
         uses: quarto-dev/quarto-actions/setup@v2
 
+      - name: Cache Quarto cell cache
+        uses: actions/cache@v4
+        with:
+          path: _cache
+          key: quarto-cache-${{ github.run_id }}
+          restore-keys: |
+            quarto-cache-
+
       - name: Render notebook
         run: uv run quarto render hubbard-trotter.ipynb
 
